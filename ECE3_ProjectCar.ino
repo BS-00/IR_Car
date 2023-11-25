@@ -12,43 +12,49 @@ const int N_SENSORS = 8;
 const int SENSOR_WEIGHTS[] = {-15, -14, -12, -8, 8, 12, 14, 15};
 //Consider calculating at the start of every run to account for room-specific lighting
 const float MIN_SENSOR_VALS[] = {700.6, 644.2, 649.2, 593.2, 607.6, 635.4, 682.4, 696.4}; 
+
+const float MAX_NORM_VAL = 1000,
+            MIN_NORM_VAL = 0;
 const float NORM_FACTORS[] = {0.55574, 0.53885, 0.54897, 0.52444, 0.52843, 0.53631, 0.55018, 0.55444};
 
+const int BASE_SPEED = 100,
+          MIN_SPEED = 10,
+          MAX_SPEED = 255;
+#define TUNABLE_SPEED min(BASE_SPEED-MIN_SPEED, MAX_SPEED-BASE_SPEED)
+
+//Completley arbitrary / based on prop constants?
+const int MAX_PID_VAL = 7000;
+//Proportionality constants (need tweaking)
 const float Kp = 1,
             Ki = 1,
             Kd = 1;
 //VARIABLES
-float normSensorVals[N_SENSORS] = {};
-
 float error = 0,
       prevError = 0,
-      errorIntegral = 0;
-float prevSpeed = 0;
+      errorIntegral = 0,
+      prevCorrection = 0;
 
-float lastUpdateSecs = 0; //Consider the possibllity memory runs out?
+unsigned long lastUpdateMillis = 0;
 
-void ChangeBaseSpeed(int initialBaseSpd, int finalBaseSpd) {
-  /*
-  * This given function changes the car base speed gradually (in about 300 ms) from
-  * initialBaseSpeed to finalBaseSpeed. This non-instantaneous speed change
-  * reduces the load on the plastic geartrain, and reduces the failure rate of
-  * the motors.
-  */
-  int numSteps = 5;
-  int pwmLeftVal = initialBaseSpd; 
-  int pwmRightVal = initialBaseSpd; 
-  int deltaLeft = (finalBaseSpd-initialBaseSpd)/numSteps; 
-  int deltaRight = (finalBaseSpd-initialBaseSpd)/numSteps; 
-  for(int k = 0; k < numSteps; k++) {
-    pwmLeftVal = pwmLeftVal + deltaLeft;
-    pwmRightVal = pwmRightVal + deltaRight;
-    analogWrite(L_PWM_PIN, pwmLeftVal);
-    analogWrite(R_PWM_PIN, pwmRightVal);
-    delay(60);
+
+int updateWheelSpeeds(int initRSpeed=-1, int finalRSpeed=-1, 
+                      int initLSpeed=-1,  int finalLSpeed=-1, 
+                      int nSteps=5, int delayMillis=50) {
+  int lPWM = initLSpeed,
+      rPWM = initRSpeed;
+  int dL = (finalLSpeed - initLSpeed)/nSteps,
+      dR = (finalRSpeed - initRSpeed)/nSteps;
+  for (int i = 0; i < nSteps; i++) {
+    lPWM += dL;
+    rPWM += dR;
+    if (initLSpeed > 0 && finalLSpeed > 0) analogWrite(L_PWM_PIN, lPWM);
+    if (initRSpeed > 0 && finalRSpeed > 0) analogWrite(R_PWM_PIN, rPWM);
+    delay(delayMillis);
   }
-} 
+  return 1;
+}
 
-int updateNormSensorVals(int nSamples, int delayMillis) {
+int updateError(int nSamples=5, int delayMillis=20) {
   float avgSensorVals[N_SENSORS] = {};
   //Average sensor values
   for (int i = 0; i < nSamples; i++) {
@@ -60,22 +66,15 @@ int updateNormSensorVals(int nSamples, int delayMillis) {
     }
     delay(delayMillis);
   }
-  for (int i = 0; i < N_SENSORS; i++) {
-    avgSensorVals[i] /= nSamples;
-    //Normalize sensor values
-    normSensorVals[i] = max((avgSensorVals[i] - MIN_SENSOR_VALS[i]) * NORM_FACTORS[i], 0);
-  }
-  return 1;
-}
-
-float updateError() {
-  int N_SAMPLES = 5,
-      DELAY_MILLIS = 20;
-  updateNormSensorVals(N_SAMPLES, DELAY_MILLIS);
   error = 0;
   for (int i = 0; i < N_SENSORS; i++) {
-    error += normSensorVals[i]*SENSOR_WEIGHTS[i];
+    avgSensorVals[i] /= nSamples;
+    //Normalize sensor values between 0 and 1000 (some cuttoff can occur here but hopefully it will not make a large difference)
+    float normSensorVal = min(max((avgSensorVals[i] - MIN_SENSOR_VALS[i]) * NORM_FACTORS[i], MIN_NORM_VAL), MAX_NORM_VAL);
+    //Calaulate sensor fusion error
+    error += normSensorVal * SENSOR_WEIGHTS[i];
   }
+  return 1;
 }
 
 void setup() {
@@ -96,19 +95,25 @@ void setup() {
   digitalWrite(R_NSLP_PIN, HIGH);
   
   Serial.begin(9600);
-  lastUpdateSecs = millis()/1000;
+  lastUpdateMillis = millis();
 }
 
+const int LOOP_DELAY_MILLIS = 10;
 void loop() {
+  //Check for special cases like donuts / end of track
+
   updateError();
-  float dt = (millis()/1000) - lastUpdateSecs;
+  float dt = millis() - lastUpdateMillis;
   float errorDerivative = (error - prevError)/dt;
   errorIntegral += error * dt;
   
-  float motorSpeed = Kp * error + Kd * errorDerivative + Ki * errorIntegral;
-  lastUpdateSecs = millis()/1000;
-  ChangeBaseSpeed(prevSpeed, motorSpeed);
+  float pidOut = constrain(Kp*error + Kd*errorDerivative + Ki*errorIntegral, -MAX_PID_VAL, MAX_PID_VAL);
+  int correction = map(pidOut, -MAX_PID_VAL, MAX_PID_VAL, -TUNABLE_SPEED, TUNABLE_SPEED);
+  lastUpdateMillis = millis();
+  updateWheelSpeeds(BASE_SPEED+prevCorrection, BASE_SPEED+correction, 
+                    BASE_SPEED-prevCorrection, BASE_SPEED-correction);
 
   prevError = error;
-  prevSpeed = motorSpeed;
+  prevCorrection = correction;
+  delay(LOOP_DELAY_MILLIS);
 }
