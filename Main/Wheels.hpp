@@ -10,8 +10,8 @@ const int R_NSLP_PIN = 11,
           R_PWM_PIN = 39;
 
 int initWheels();
-int updateWheelSpeeds(const int=-1, const int=-1, const int=-1,  
-                      const int=-1, const int=5, const int=50);
+int updateWheelVelocities(const int=-1, const int=-1, const int=-1,  
+                          const int=-1, const int=5, const int=10);
 int donut();
 
 #endif

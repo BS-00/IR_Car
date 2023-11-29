@@ -1,4 +1,5 @@
 #include "Wheels.hpp"
+#include "Main.hpp"
 #include <ECE3.h>
 
 int initWheels() {
@@ -19,16 +20,25 @@ int initWheels() {
     return 1;
 }
 
-int updateWheelSpeeds(const int initRSpeed, const int finalRSpeed, 
-                      const int initLSpeed,  const int finalLSpeed, 
-                      const int nSteps, const int delayMillis) {
-  int lPWM = initLSpeed, rPWM = initRSpeed;
-  const int dL = (finalLSpeed - initLSpeed)/nSteps,
-            dR = (finalRSpeed - initRSpeed)/nSteps;
+int updateWheelVelocities(const int initLVelocity,  const int finalLVelocity, 
+                          const int initRVelocity, const int finalRVelocity, 
+                          const int nSteps, const int delayMillis) {
+  constrain(initLVelocity, -MAX_SPEED, MAX_SPEED);
+  constrain(finalLVelocity, -MAX_SPEED, MAX_SPEED);
+  constrain(initRVelocity, -MAX_SPEED, MAX_SPEED);
+  constrain(finalRVelocity, -MAX_SPEED, MAX_SPEED);
+
+  int lPWM = initLVelocity, rPWM = initRVelocity;
+  const int dL = (int)((finalLVelocity - initLVelocity)/nSteps),
+            dR = (int)((finalRVelocity - initRVelocity)/nSteps);
   for (int i = 0; i < nSteps; i++) {
     lPWM += dL; rPWM += dR;
-    if (initLSpeed > 0 && finalLSpeed > 0) analogWrite(L_PWM_PIN, lPWM);
-    if (initRSpeed > 0 && finalRSpeed > 0) analogWrite(R_PWM_PIN, rPWM);
+    //Set wheel directions
+    digitalWrite(L_DIR_PIN, lPWM < 0);
+    digitalWrite(R_DIR_PIN, rPWM < 0);
+
+    analogWrite(L_PWM_PIN, abs(lPWM));
+    analogWrite(R_PWM_PIN, abs(rPWM));
     delay(delayMillis);
   }
   return 1;
