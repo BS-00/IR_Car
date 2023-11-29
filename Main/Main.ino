@@ -12,7 +12,7 @@ std::array<float, N_SENSORS> minSensorVals;
 float prevError = 0,
       errorIntegral = 0,
       prevCorrection = 0;
-unsigned long lastUpdateMillis = 0;
+//unsigned long lastUpdateMillis = 0;
 
 
 float getError() {
@@ -29,29 +29,35 @@ float getError() {
 
 
 void setup() {
+  delay(3000);
   ECE3_Init();
-  Serial.begin(9600);
+  Serial.begin(115200);
+  Serial.println("Callibrating...");
   if (!initWheels() || !initSensors(minSensorVals)) exit(1);
-  lastUpdateMillis = millis();
+  //lastUpdateMillis = millis();
+  Serial.println("Done callibrating.");
+  delay(5000);
+  Serial.println("Starting now.");
 }
 
 enum State { STRAIGHT, DONUT };
 State state = STRAIGHT;
 void loop() {
+  float error = getError();
+
   switch(state) {
   case STRAIGHT: {
-    float error = getError();
-    float dt = millis() - lastUpdateMillis;
-    float errorDerivative = (error - prevError)/dt;
-    errorIntegral += error * dt;
+    //Not necessary as it is accounted for in the prop constants
+    //float dt = millis() - lastUpdateMillis; 
+    float errorDerivative = (error - prevError);
+    errorIntegral += error;
+    int correction = (int)(Kp*error + Kd*errorDerivative + Ki*errorIntegral);
+    int speedIncrease = 0;
     
-    float pidOut = constrain(Kp*error + Kd*errorDerivative + Ki*errorIntegral, -MAX_PID_VAL, MAX_PID_VAL);
-    int correction = map(pidOut, -MAX_PID_VAL, MAX_PID_VAL, -TUNABLE_SPEED, TUNABLE_SPEED);
-    lastUpdateMillis = millis();
-    //Figure out which of left/right should - correction, randomly chosen atm
-    updateWheelSpeeds(BASE_SPEED+prevCorrection, BASE_SPEED+correction, 
-                      BASE_SPEED-prevCorrection, BASE_SPEED-correction);
-
+    //lastUpdateMillis = millis();
+    //Neg error => turn right, positive error => turn left
+    updateWheelVelocities(BASE_SPEED-prevCorrection, BASE_SPEED-correction+speedIncrease, 
+                          BASE_SPEED+prevCorrection, BASE_SPEED+correction+speedIncrease, 1, 0);
     prevError = error;
     prevCorrection = correction;
     break;
@@ -64,5 +70,4 @@ void loop() {
     exit(1);
     break;
   }
-  delay(LOOP_DELAY_MILLIS);
 }
