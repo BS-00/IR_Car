@@ -3,9 +3,9 @@
 #include <array>
 
 int initSensors(std::array<float, N_SENSORS>& minSensorVals) {
-    minSensorVals = getAvgSensorVals();
-    for(int i = 0; i < N_SENSORS; i++) {
-        if (minSensorVals[i] > 1000) {
+    minSensorVals = getAvgSensorVals(10, 20);
+    for (int i = 0; i < N_SENSORS; i++) {
+        if (minSensorVals[i] > 900) {
             Serial.println("Minimum sensor values are too high, likely the car was not callibrated properly: ");
             for (int sensorVal : minSensorVals) {
                 Serial.print(sensorVal);
