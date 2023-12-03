@@ -12,7 +12,8 @@ std::array<float, N_SENSORS> minSensorVals;
 float prevError = 0,
       errorIntegral = 0,
       prevCorrection = 0;
-//unsigned long lastUpdateMillis = 0;
+    
+int nDonuts = 0;
 
 
 float getError() {
@@ -34,40 +35,42 @@ void setup() {
   Serial.begin(115200);
   Serial.println("Callibrating...");
   if (!initWheels() || !initSensors(minSensorVals)) exit(1);
-  //lastUpdateMillis = millis();
   Serial.println("Done callibrating.");
   delay(5000);
   Serial.println("Starting now.");
 }
 
-enum State { STRAIGHT, DONUT };
-State state = STRAIGHT;
 void loop() {
   float error = getError();
+  
+  if (abs(error) > DONUT_ERR_THRESH) {
+    if (nDonuts == 1) exit(0); //Car reached the start
+    error = getError();
+  }
 
-  switch(state) {
-  case STRAIGHT: {
-    //Not necessary as it is accounted for in the prop constants
-    //float dt = millis() - lastUpdateMillis; 
-    float errorDerivative = (error - prevError);
-    errorIntegral += error;
-    int correction = (int)(Kp*error + Kd*errorDerivative + Ki*errorIntegral);
-    int speedIncrease = 0;
-    
-    //lastUpdateMillis = millis();
-    //Neg error => turn right, positive error => turn left
-    updateWheelVelocities(BASE_SPEED-prevCorrection, BASE_SPEED-correction+speedIncrease, 
-                          BASE_SPEED+prevCorrection, BASE_SPEED+correction+speedIncrease, 1, 0);
-    prevError = error;
-    prevCorrection = correction;
-    break;
+  float errorDerivative = (error - prevError);
+  errorIntegral += error;
+  int correction = (int)(Kp*error + Kd*errorDerivative + Ki*errorIntegral);
+  int lSpeed = BASE_SPEED,
+      rSpeed = BASE_SPEED;
+
+  if (abs(correction) < STRAIGHT_CORRECTION_THRESH) {
+    //On a straightaway
+    lSpeed += STRAIGHT_SPEED_BOOST;
+    rSpeed += STRAIGHT_SPEED_BOOST;
+    correction = (int)(correction / 5); //Reduce oscillations
+  } else if (abs(correction) > CURVE_CORRECTION_THRESH) {
+    //On a curve
+    lSpeed -= CURVE_SPEED_DECREASE;
+    rSpeed -= CURVE_SPEED_DECREASE;
   }
-  case DONUT:
-    donut();
-    break;
-  default: 
-    Serial.println("ERROR: State variable not defined, exiting");
-    exit(1);
-    break;
-  }
+
+  //Neg error => turn right, positive error => turn left
+  lSpeed -= correction;
+  rSpeed += correction;
+  
+  updateWheelVelocities(BASE_SPEED-prevCorrection, lSpeed, 
+                        BASE_SPEED+prevCorrection, rSpeed, 2, 10);
+  prevError = error;
+  prevCorrection = correction;
 }
