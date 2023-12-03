@@ -9,9 +9,11 @@ const int R_NSLP_PIN = 11,
           R_DIR_PIN = 30,
           R_PWM_PIN = 39;
 
+const int DONUT_DELAY_MS = 275;
+
 int initWheels();
 int updateWheelVelocities(const int=-1, const int=-1, const int=-1,  
-                          const int=-1, const int=5, const int=10);
-int donut();
+                          const int=-1, const int=4, const int=10);
+int donut(const int, const int);
 
 #endif

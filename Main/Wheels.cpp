@@ -44,8 +44,11 @@ int updateWheelVelocities(const int initLVelocity,  const int finalLVelocity,
   return 1;
 }
 
-//Turn the car 180 deg
-int donut() {
-  
+//Turn the car ~180 deg
+int donut(const int initLVelocity, const int initRVelocity) {
+  updateWheelVelocities(initLVelocity, MAX_SPEED,
+                        initRVelocity, -MAX_SPEED);
+  delay(DONUT_DELAY_MS); //Delay until donut is about done (PID can correct any error)
+  updateWheelVelocities(MAX_SPEED, 0, -MAX_SPEED, 0, 2);
   return 1;
 }
