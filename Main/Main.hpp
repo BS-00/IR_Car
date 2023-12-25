@@ -7,14 +7,14 @@
 const int LED_PIN = 41;
 
 //PID SPEED CONTROL
-const int BASE_SPEED = 50,
+const int BASE_SPEED = 60,
           MAX_SPEED = 250,
           STRAIGHT_SPEED_BOOST = 0;
 
 //Proportionality constants
-const float Kp = .0055,
+const float Kp = .0053,
             Ki = .000001,
-            Kd = .0025;
+            Kd = .0035;
 
 //Determines if the car is on a curve/straightaway based on these values
 const int STRAIGHT_CORRECTION_THRESH = 15,
