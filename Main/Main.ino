@@ -35,8 +35,6 @@ void setup() {
   digitalWrite(LED_PIN, HIGH);
   awaitBump1();
   digitalWrite(LED_PIN, LOW);
-
-  delay(500);
 }
 
 void loop() {
@@ -55,25 +53,29 @@ void loop() {
   }
   
   float error = getError();
+
   float errorDerivative = (error - prevError);
   errorIntegral += error;
   int correction = (int)(Kp*error + Kd*errorDerivative + Ki*errorIntegral);
   int lSpeed = BASE_SPEED,
       rSpeed = BASE_SPEED;
-
-  if (abs(correction) < STRAIGHT_CORRECTION_THRESH) {
+      
+  if (abs(error) > CURVE_ERR_THRESH) {
+    //On a curve
+    lSpeed -= CURVE_SPEED_DECREASE;
+    rSpeed -= CURVE_SPEED_DECREASE;
+  } else if (abs(error) < STRAIGHT_ERR_THRESH) {
     //On a straightaway
     lSpeed += STRAIGHT_SPEED_BOOST;
     rSpeed += STRAIGHT_SPEED_BOOST;
-    correction = (int)(correction / 4); //Reduce oscillations
-  } 
+  }
 
   //Neg error => turn right, positive error => turn left
   lSpeed -= correction;
   rSpeed += correction;
   
   updateWheelVelocities(prevLSpeed, lSpeed, 
-                        prevRSpeed, rSpeed, 2, 10);
+                        prevRSpeed, rSpeed, 2, 5);
   prevError = error;
   prevCorrection = correction;
 }
