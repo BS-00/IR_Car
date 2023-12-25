@@ -13,7 +13,8 @@ const int R_NSLP_PIN = 11,
           R_PWM_PIN = 39;
 
 const int DONUT_SPEED = 220;
-const int DONUT_DELAY_MS = 300;
+const int DONUT_DELAY_MS = 275,
+          DONUT_FWD_DELAY_MS = 200;
 
 int initWheels();
 int updateWheelVelocities(const int=-1, const int=-1, const int=-1,  

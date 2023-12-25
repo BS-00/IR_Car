@@ -52,6 +52,6 @@ int donut(const int initLVelocity, const int initRVelocity) {
   updateWheelVelocities(initLVelocity, DONUT_SPEED, initRVelocity, -DONUT_SPEED);
   delay(DONUT_DELAY_MS);
   updateWheelVelocities(DONUT_SPEED, BASE_SPEED, -DONUT_SPEED, BASE_SPEED, 2);
-  delay(10);
+  delay(DONUT_FWD_DELAY_MS);
   return 1;
 }
