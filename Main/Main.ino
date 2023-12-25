@@ -8,32 +8,24 @@
 #include "SensorArray.hpp"
 
 
+SensorArray sensorArray;
+Wheels wheels;
+
 float prevError = 0,
       errorIntegral = 0,
       prevCorrection = 0;
 int nDonuts = 0;
 
-float getError() {
-  std::array<float, N_SENSORS> normSensorVals = normalizeSensorVals(getAvgSensorVals());
-
-  //Sensor Fusion
-  float error = 0;
-  for (int i = 0; i < N_SENSORS; i++) {
-    error += normSensorVals[i] * SENSOR_WEIGHTS[i];
-  }
-  return error;
-}
-
 
 void setup() {
   ECE3_Init();
   Serial.begin(115200);
-  if (!initWheels() || !initSensors()) exit(1);
+  if (!sensorArray.init() || !wheels.init()) exit(1);
 
   //Indicate done callibrating
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, HIGH);
-  awaitBump1();
+  if(!sensorArray.awaitBump(0)) exit(1);
   digitalWrite(LED_PIN, LOW);
 }
 
@@ -42,17 +34,17 @@ void loop() {
   int prevLSpeed = BASE_SPEED-prevCorrection,
       prevRSpeed = BASE_SPEED+prevCorrection;
 
-  if (getSensorSum() > DONUT_ERR_THRESH) {
-    donut(prevLSpeed, prevRSpeed);
+  if (sensorArray.sensorSum() > DONUT_ERR_THRESH) {
+    wheels.donut(prevLSpeed, prevRSpeed);
     //Car reached the start
     if (nDonuts == 1) {
-      updateWheelVelocities(prevLSpeed, 0, prevRSpeed, 0);
+      wheels.updateWheelVelocities(prevLSpeed, 0, prevRSpeed, 0);
       exit(0); 
     }
     nDonuts++;
   }
   
-  float error = getError();
+  float error = sensorArray.error();
 
   float errorDerivative = (error - prevError);
   errorIntegral += error;
@@ -74,8 +66,7 @@ void loop() {
   lSpeed -= correction;
   rSpeed += correction;
   
-  updateWheelVelocities(prevLSpeed, lSpeed, 
-                        prevRSpeed, rSpeed, 2, 5);
+  wheels.updateWheelVelocities(prevLSpeed, lSpeed, prevRSpeed, rSpeed, 1, 0);
   prevError = error;
   prevCorrection = correction;
 }
