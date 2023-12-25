@@ -1,20 +1,23 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+#undef min
+#undef max
+
+const int LED_PIN = 41;
+
 //PID SPEED CONTROL
-const int BASE_SPEED = 70, 
-          MAX_SPEED = 220,
-          STRAIGHT_SPEED_BOOST = 80,
-          CURVE_SPEED_DECREASE = 25;
+const int BASE_SPEED = 50,
+          MAX_SPEED = 250,
+          STRAIGHT_SPEED_BOOST = 0;
 
 //Proportionality constants
-const float Kp = .0037,
+const float Kp = .0055,
             Ki = .000001,
-            Kd = .011;
+            Kd = .0025;
 
 //Determines if the car is on a curve/straightaway based on these values
-const int STRAIGHT_CORRECTION_THRESH = 20,
-          CURVE_CORRECTION_THRESH = 55,
-          DONUT_ERR_THRESH = 20000;
+const int STRAIGHT_CORRECTION_THRESH = 15,
+          DONUT_ERR_THRESH = 18000;
 
 #endif
