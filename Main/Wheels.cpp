@@ -1,6 +1,9 @@
+#include <ECE3.h>
+#undef min
+#undef max
+
 #include "Wheels.hpp"
 #include "Main.hpp"
-#include <ECE3.h>
 
 int initWheels() {
     pinMode(L_NSLP_PIN, OUTPUT);
@@ -46,9 +49,9 @@ int updateWheelVelocities(const int initLVelocity,  const int finalLVelocity,
 
 //Turn the car ~180 deg
 int donut(const int initLVelocity, const int initRVelocity) {
-  updateWheelVelocities(initLVelocity, MAX_SPEED,
-                        initRVelocity, -MAX_SPEED);
-  delay(DONUT_DELAY_MS); //Delay until donut is about done (PID can correct any error)
-  updateWheelVelocities(MAX_SPEED, 0, -MAX_SPEED, 0, 2);
+  updateWheelVelocities(initLVelocity, DONUT_SPEED, initRVelocity, -DONUT_SPEED);
+  delay(DONUT_DELAY_MS);
+  updateWheelVelocities(DONUT_SPEED, BASE_SPEED, -DONUT_SPEED, BASE_SPEED, 2);
+  delay(10);
   return 1;
 }
