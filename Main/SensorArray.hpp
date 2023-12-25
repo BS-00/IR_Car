@@ -14,8 +14,9 @@ const float MAX_NORM_VAL = 1000,
 
 const int BUMP1_PIN = 24;
 
-const int DARK_THRESHOLD = 1600,
-          BRIGHT_BUFFER = 200;
+const int DARK_THRESHOLD   = 1700, //Raw sensor values greater than this are considered dark
+          BRIGHT_THRESHOLD = 800; //Raw sensor values less than this are considered bright
+const int OBSTACLE_DELAY_MILLIS = 25;
 
 
 static std::array<float, N_SENSORS> minSensorVals;

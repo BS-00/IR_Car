@@ -8,14 +8,14 @@
 
 
 //Private helper functions
-//Checks if any of the middle sensors are dark
+//Checks if any of the middle sensors are not bright
 bool onLine(const std::array<float, N_SENSORS>& sensorVals) {
-  float midSensorIndex = N_SENSORS/2;
-  if ((int)midSensorIndex == midSensorIndex && midSensorIndex+1 < N_SENSORS) {
-    return sensorVals[midSensorIndex-1] >= minSensorVals[midSensorIndex-1]+BRIGHT_BUFFER || 
-           sensorVals[midSensorIndex] >= minSensorVals[midSensorIndex]+BRIGHT_BUFFER ||
-           sensorVals[midSensorIndex-2] >= minSensorVals[midSensorIndex-2]+BRIGHT_BUFFER || 
-           sensorVals[midSensorIndex+1] >= minSensorVals[midSensorIndex+1]+BRIGHT_BUFFER;
+  float rightMidSensorIndex = N_SENSORS/2;
+  if ((int)rightMidSensorIndex == rightMidSensorIndex && rightMidSensorIndex+1 < N_SENSORS) {
+    return sensorVals[rightMidSensorIndex-2] > BRIGHT_THRESHOLD || 
+           sensorVals[rightMidSensorIndex-1] > BRIGHT_THRESHOLD || 
+           sensorVals[rightMidSensorIndex]   > BRIGHT_THRESHOLD ||
+           sensorVals[rightMidSensorIndex+1] > BRIGHT_THRESHOLD;
   }
   //Car does not have enough sensors or has an odd number of sensors
   exit(1);
@@ -23,8 +23,13 @@ bool onLine(const std::array<float, N_SENSORS>& sensorVals) {
 
 //Returns a boolean array containing if an obstacle was detected on each side of the car [left, right]
 std::array<bool, 2> detectObstacles(const std::array<float, N_SENSORS>& sensorVals) {
-  if (!onLine(sensorVals)) return {{0, 0}};
-  return {{sensorVals[0] > DARK_THRESHOLD, sensorVals[N_SENSORS-1] > DARK_THRESHOLD}};
+  if (!onLine(sensorVals)) {
+    //Ensure not a small gap in the track
+    delay(OBSTACLE_DELAY_MILLIS);
+    if (!onLine(sensorVals)) return {{0, 0}};
+  }
+  return {{sensorVals[0] > DARK_THRESHOLD && sensorVals[2] < BRIGHT_THRESHOLD, 
+           sensorVals[N_SENSORS-1] > DARK_THRESHOLD && sensorVals[N_SENSORS-3] < BRIGHT_THRESHOLD}};
 }
 
 std::array<float, N_SENSORS> normalizeSensorVals(const std::array<float, N_SENSORS>& sensorVals) {
@@ -74,13 +79,19 @@ std::array<float, N_SENSORS> getAvgSensorVals(const int nSamples, const int dela
   //Disable outmost sensors when between obstacles
   if (removeOuterSensors) {
     std::array<bool, 2> detectedObstacles = detectObstacles(avgSensorVals);
+    //Serial.println("ON LINE: " + String(onLine(avgSensorVals)) + "\tLEFT DETECTED: " + String(detectedObstacles[0]) + "\tRIGHT DETECTED: " + String(detectedObstacles[1]));
+    digitalWrite(LED_PIN, LOW);
     if (detectedObstacles[0]) {
       avgSensorVals[0] = minSensorVals[0];
       avgSensorVals[1] = minSensorVals[1];
+      digitalWrite(LED_PIN, HIGH);
+    } else {
+      digitalWrite(LED_PIN, LOW);
     }
     if (detectedObstacles[1]) {
       avgSensorVals[N_SENSORS-1] = minSensorVals[N_SENSORS-1];
       avgSensorVals[N_SENSORS-2] = minSensorVals[N_SENSORS-2];
+      digitalWrite(LED_PIN, HIGH);
     }
   }
   return avgSensorVals;
