@@ -5,7 +5,8 @@
 #include "Wheels.hpp"
 #include "Main.hpp"
 
-int initWheels() {
+Wheels::Wheels() {}
+int Wheels::init() {
     pinMode(L_NSLP_PIN, OUTPUT);
     pinMode(L_DIR_PIN, OUTPUT);
     pinMode(L_PWM_PIN, OUTPUT);
@@ -23,9 +24,9 @@ int initWheels() {
     return 1;
 }
 
-int updateWheelVelocities(const int initLVelocity,  const int finalLVelocity, 
-                          const int initRVelocity, const int finalRVelocity, 
-                          const int nSteps, const int delayMillis) {
+int Wheels::updateWheelVelocities(const int initLVelocity,  const int finalLVelocity, 
+                                  const int initRVelocity, const int finalRVelocity, 
+                                  const int nSteps, const int delayMillis) const {
   constrain(initLVelocity, -MAX_SPEED, MAX_SPEED);
   constrain(finalLVelocity, -MAX_SPEED, MAX_SPEED);
   constrain(initRVelocity, -MAX_SPEED, MAX_SPEED);
@@ -48,7 +49,7 @@ int updateWheelVelocities(const int initLVelocity,  const int finalLVelocity,
 }
 
 //Turn the car ~180 deg
-int donut(const int initLVelocity, const int initRVelocity) {
+int Wheels::donut(const int initLVelocity, const int initRVelocity) const {
   updateWheelVelocities(initLVelocity, DONUT_SPEED, initRVelocity, -DONUT_SPEED);
   delay(DONUT_DELAY_MS);
   updateWheelVelocities(DONUT_SPEED, BASE_SPEED, -DONUT_SPEED, BASE_SPEED, 2);
