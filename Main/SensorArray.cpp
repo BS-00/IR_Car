@@ -99,12 +99,11 @@ int SensorArray::sensorSum() const {
 //Checks if any of the middle sensors are not bright
 bool SensorArray::onLine(const std::array<float, N_SENSORS>& sensorVals) const {
   float rightMidSensorIndex = N_SENSORS/2;
-  const int BUFFER = 200;
   if ((int)rightMidSensorIndex == rightMidSensorIndex && rightMidSensorIndex+1 < N_SENSORS) {
-    return sensorVals[rightMidSensorIndex-2] > _BRIGHT_THRESH-BUFFER || 
+    return sensorVals[rightMidSensorIndex-2] > _BRIGHT_THRESH || 
            sensorVals[rightMidSensorIndex-1] > _BRIGHT_THRESH || 
            sensorVals[rightMidSensorIndex]   > _BRIGHT_THRESH ||
-           sensorVals[rightMidSensorIndex+1] > _BRIGHT_THRESH-BUFFER;
+           sensorVals[rightMidSensorIndex+1] > _BRIGHT_THRESH;
   }
   //Car does not have enough sensors or has an odd number of sensors
   exit(1);

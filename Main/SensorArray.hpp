@@ -27,7 +27,7 @@ public:
 private:
     static constexpr int _BUMP0_PIN = 24;
     static constexpr int _DARK_THRESH = 1800, 
-                         _BRIGHT_THRESH = 1100; 
+                         _BRIGHT_THRESH = 1300; 
     
     bool _initialized;
 

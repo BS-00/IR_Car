@@ -10,12 +10,12 @@ const int LED_PIN = 41;
 const int BASE_SPEED = 65,
           MAX_SPEED = 250,
           CURVE_SPEED_DECREASE = 20,
-          STRAIGHT_SPEED_BOOST = 10;
+          STRAIGHT_SPEED_BOOST = 7;
 
 //Proportionality constants (PID)
-const float Kp = .00515,
+const float Kp = .00505,
             Ki = .0000001,
-            Kd = .0032;
+            Kd = .00335;
 
 //Determines if the car is on a curve/straightaway/crosspeice based on these values
 const int CURVE_ERR_THRESH = 7000,
