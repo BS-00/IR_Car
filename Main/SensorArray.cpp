@@ -12,12 +12,10 @@ constexpr std::array<int, SensorArray::N_SENSORS> SensorArray::SENSOR_WEIGHTS;
 constexpr std::array<float, SensorArray::N_SENSORS> SensorArray::NORM_FACTORS;
 
 
-SensorArray::SensorArray() : _initialized(false) {}
-
 int SensorArray::init() {
   pinMode(_BUMP0_PIN, INPUT_PULLUP);
 
-  minSensorVals = avgSensorVals(10, 25);
+  minSensorVals = avgSensorVals(10, 25, false);
 
   //Ensure callibrated properly
   for (float minSensorVal : minSensorVals) {
@@ -57,6 +55,8 @@ std::array<float, SensorArray::N_SENSORS> SensorArray::avgSensorVals(const int n
 
   //Disable outmost sensors when between obstacles
   if (removeOuterSensors) {
+    if (!_initialized) exit(1);
+
     std::array<bool, 2> detectedObstacles = detectObstacles(avgSensorVals);
     //Serial.println("ON LINE: " + String(onLine(avgSensorVals)) + "\tLEFT DETECTED: " + String(detectedObstacles[0]) + "\tRIGHT DETECTED: " + String(detectedObstacles[1]));
     digitalWrite(LED_PIN, LOW);
@@ -99,7 +99,7 @@ int SensorArray::sensorSum() const {
 //Checks if any of the middle sensors are not bright
 bool SensorArray::onLine(const std::array<float, N_SENSORS>& sensorVals) const {
   float rightMidSensorIndex = N_SENSORS/2;
-  const int BUFFER = 300;
+  const int BUFFER = 200;
   if ((int)rightMidSensorIndex == rightMidSensorIndex && rightMidSensorIndex+1 < N_SENSORS) {
     return sensorVals[rightMidSensorIndex-2] > _BRIGHT_THRESH-BUFFER || 
            sensorVals[rightMidSensorIndex-1] > _BRIGHT_THRESH || 
@@ -119,6 +119,8 @@ std::array<bool, 2> SensorArray::detectObstacles(const std::array<float, N_SENSO
 }
 
 std::array<float, SensorArray::N_SENSORS> SensorArray::normSensorVals() const {
+  if (!_initialized) exit(1);
+  
   std::array<float, N_SENSORS> sensorVals = avgSensorVals(),
                                normSensorVals;
   for (int i = 0; i < N_SENSORS; i++) {

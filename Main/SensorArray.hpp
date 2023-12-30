@@ -16,7 +16,7 @@ public:
 
     std::array<float, N_SENSORS> minSensorVals;
 
-    SensorArray();
+    SensorArray() : _initialized(false) {}
     static int awaitBump(int);
 
     int init();
@@ -27,7 +27,7 @@ public:
 private:
     static constexpr int _BUMP0_PIN = 24;
     static constexpr int _DARK_THRESH = 1800, 
-                         _BRIGHT_THRESH = 1200; 
+                         _BRIGHT_THRESH = 1100; 
     
     bool _initialized;
 
